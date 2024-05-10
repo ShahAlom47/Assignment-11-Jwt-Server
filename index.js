@@ -18,7 +18,7 @@ app.use(cookieParser())
 
 
 
-;
+  ;
 
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.r31xce1.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
@@ -32,22 +32,22 @@ const client = new MongoClient(uri, {
   }
 });
 
-const verifyToken=(req,res,next)=>{
-  const token= req.cookies.token;
-// console.log('tok tok ',req.cookies.token);
+const verifyToken = (req, res, next) => {
+  const token = req.cookies.token;
+  // console.log('tok tok ',req.cookies.token);
 
-if(!token){
-  return res.status(401).send({message:'Unauthorized Access'})
-}
-
-
-jwt.verify(token,process.env.ACCESS_TOKEN,(err,decode)=>{
-  if(err){
-    return res.status(403).send({message:'Forbidden Access'})
+  if (!token) {
+    return res.status(401).send({ message: 'Unauthorized Access' })
   }
-req.userInfo=decode
-next()
-}) 
+
+
+  jwt.verify(token, process.env.ACCESS_TOKEN, (err, decode) => {
+    if (err) {
+      return res.status(403).send({ message: 'Forbidden Access' })
+    }
+    req.userInfo = decode
+    next()
+  })
 }
 
 async function run() {
@@ -57,45 +57,87 @@ async function run() {
 
     const roomsDataCollection = client.db('Assignment11DB').collection('roomsData');
 
- 
+
+    // Auth related API 
 
 
- app.get ('/rooms',async(req,res)=>{
-  const result = await roomsDataCollection.find().limit(6).toArray();
-  res.send(result)
- }) 
+    app.post('/jwt', async (req, res) => {
+      const userEmail = req.body
+      const token = jwt.sign(userEmail, process.env.ACCESS_TOKEN, { expiresIn: '1h' });
+      res.cookie('token', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production" ? true : false,
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+      })
+      console.log(userEmail);
+      res.send({ success: true })
+
+    })
+
+    //  clear cookes 
+    app.post('/jwt/logout', async (req, res) => {
+      const userEmail = req.body;
+      res.clearCookie('token', {
+        maxAge: 0,
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production" ? true : false,
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+      })
+      console.log(userEmail);
+      res.send({ success: true })
+    });
 
 
- app.get('/all-rooms', async (req, res) => {
-  const sort = req.query.sort;
-  const max = parseInt(req.query.max);
-  const min = parseInt(req.query.min);
 
-  const options = {};
-  if (sort === 'ase' || sort === 'dise') {
-    const sortDirection = sort === 'dise' ? -1 : 1;
-    options.sort = { price_per_night: sortDirection };
-  }
 
-  const filter = {};
-  if (min && max) {
-    filter.price_per_night = { $gte: min, $lte: max };
-  }
-   else if (min) {
-    filter.price_per_night = { $gte: min };
-  }
-   else if (max) {
-    filter.price_per_night = { $lte: max };
-  }
+    //  service related API
 
-  try {
-    const result = await roomsDataCollection.find(filter, options).toArray();
-    res.send(result);
-  } 
-  catch (error) {
-    res.status(500).json({ error: ' Server Error' });
-  }
-});
+    app.get('/rooms', async (req, res) => {
+      const result = await roomsDataCollection.find().limit(6).toArray();
+      res.send(result)
+    })
+
+
+    app.get('/all-rooms', async (req, res) => {
+      const sort = req.query.sort;
+      const max = parseInt(req.query.max);
+      const min = parseInt(req.query.min);
+
+      const options = {};
+      if (sort === 'ase' || sort === 'dise') {
+        const sortDirection = sort === 'dise' ? -1 : 1;
+        options.sort = { price_per_night: sortDirection };
+      }
+
+      const filter = {};
+      if (min && max) {
+        filter.price_per_night = { $gte: min, $lte: max };
+      }
+      else if (min) {
+        filter.price_per_night = { $gte: min };
+      }
+      else if (max) {
+        filter.price_per_night = { $lte: max };
+      }
+
+      try {
+        const result = await roomsDataCollection.find(filter, options).toArray();
+        res.send(result);
+      }
+      catch (error) {
+        res.status(500).json({ error: ' Server Error' });
+      }
+    });
+
+
+    app.get('/room/:id', async (req, res) => {
+      const id = req.params.id
+      const query = { _id: new ObjectId(id) };
+      const result = await roomsDataCollection.findOne(query);
+      res.send(result)
+      console.log(id);
+    })
+
 
 
 
