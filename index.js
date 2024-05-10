@@ -55,18 +55,9 @@ async function run() {
     // // Connect the client to the server	(optional starting in v4.7)
     // await client.connect();
 
-    const fakeDataCollection = client.db('Assignment11DB').collection('fakeData');
     const roomsDataCollection = client.db('Assignment11DB').collection('roomsData');
 
- app.get ('/fakeData',async(req,res)=>{
-  const doc = {
-    title: "Record of a Shriveled Datum",
-    content: "No bytes, no problem. Just insert a document, in MongoDB",
-  }
-  
-  const result = await fakeDataCollection.insertOne(doc);
-  res.send(result)
- }) 
+ 
 
 
  app.get ('/rooms',async(req,res)=>{
@@ -75,22 +66,36 @@ async function run() {
  }) 
 
 
- app.get ('/all-rooms',async(req,res)=>{
-  const sort= req.query.sort
-  
-  
-  
-  const options={};
-  if (sort ==='ase' || sort == 'dise') {
-    const sortDirection = req.query.sort === 'dise' ? -1 : 1;
+ app.get('/all-rooms', async (req, res) => {
+  const sort = req.query.sort;
+  const max = parseInt(req.query.max);
+  const min = parseInt(req.query.min);
 
+  const options = {};
+  if (sort === 'ase' || sort === 'dise') {
+    const sortDirection = sort === 'dise' ? -1 : 1;
     options.sort = { price_per_night: sortDirection };
   }
-  const result = await roomsDataCollection.find({},options).toArray();
- 
- console.log(options);
-  res.send(result)
- }) 
+
+  const filter = {};
+  if (min && max) {
+    filter.price_per_night = { $gte: min, $lte: max };
+  }
+   else if (min) {
+    filter.price_per_night = { $gte: min };
+  }
+   else if (max) {
+    filter.price_per_night = { $lte: max };
+  }
+
+  try {
+    const result = await roomsDataCollection.find(filter, options).toArray();
+    res.send(result);
+  } 
+  catch (error) {
+    res.status(500).json({ error: ' Server Error' });
+  }
+});
 
 
 
