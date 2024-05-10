@@ -81,11 +81,11 @@ async function run() {
   
   
   const options={};
-  if (sort ==='ase' || sort == 'dise') {
-    const sortDirection = req.query.sort === 'dise' ? -1 : 1;
+  // if (sort ==='ase' || sort == 'dise') {
+  //   const sortDirection = req.query.sort === 'dise' ? -1 : 1;
 
-    options.sort = { price_per_night: sortDirection };
-  }
+  //   options.sort = { price_per_night: sortDirection };
+  // }
   const result = await roomsDataCollection.find({},options).toArray();
  
  console.log(options);
