@@ -8,7 +8,7 @@ const port = process.env.PORT || 5000;
 
 // middleware
 app.use(cors({
-  origin: ["http://localhost:5173", `http://localhost:5173`],
+  origin: ["http://localhost:5173", `http://localhost:5174`],
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
   credentials: true,
 }
@@ -56,6 +56,7 @@ async function run() {
     // await client.connect();
 
     const roomsDataCollection = client.db('Assignment11DB').collection('roomsData');
+    const reviewDataCollection = client.db('Assignment11DB').collection('reviewData');
 
 
     // Auth related API 
@@ -83,7 +84,7 @@ async function run() {
         secure: process.env.NODE_ENV === "production" ? true : false,
         sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
       })
-      console.log(userEmail);
+   
       res.send({ success: true })
     });
 
@@ -135,10 +136,32 @@ async function run() {
       const query = { _id: new ObjectId(id) };
       const result = await roomsDataCollection.findOne(query);
       res.send(result)
-      console.log(id);
+   
     })
 
 
+    //  insert user review  with room id  
+    app.post('/review', async (req, res) => {
+      const {reviewData} = req.body
+      const result = await reviewDataCollection.insertOne(reviewData);
+      res.send('successfully added')
+     
+    })
+//  all reviews Api 
+    app.get('/reviews', async (req, res) => {
+      const result = await reviewDataCollection.find().toArray();
+      res.send(result)
+    })
+
+    // get single room  review by room id 
+    
+    app.get('/reviews/:_id', async (req, res) => {
+      const _id = req.params._id;
+      const query = { roomId: _id }; 
+      const result = await reviewDataCollection.find(query).toArray();
+      console.log(result);
+      res.send(result);
+  })
 
 
 
