@@ -85,7 +85,7 @@ async function run() {
         secure: process.env.NODE_ENV === "production" ? true : false,
         sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
       })
-   
+
       res.send({ success: true })
     });
 
@@ -137,62 +137,70 @@ async function run() {
       const query = { _id: new ObjectId(id) };
       const result = await roomsDataCollection.findOne(query);
       res.send(result)
-   
+
     })
 
 
     //  insert user review  with room id  
     app.post('/review', async (req, res) => {
-      const {reviewData} = req.body
+      const { reviewData } = req.body
       const result = await reviewDataCollection.insertOne(reviewData);
       res.send('successfully added')
-     
+
     })
-//  all reviews Api 
+    //  all reviews Api 
     app.get('/reviews', async (req, res) => {
       const result = await reviewDataCollection.find().toArray();
       res.send(result)
     })
 
     // get single room  review by room id 
-    
+
     app.get('/reviews/:_id', async (req, res) => {
       const _id = req.params._id;
-      const query = { roomId: _id }; 
+      const query = { roomId: _id };
       const result = await reviewDataCollection.find(query).toArray();
       console.log(result);
       res.send(result);
-  })
+    })
 
 
 
-  // booking api 
-  app.post('/booking', async (req, res) => {
-    const {bookingData} = req.body
-    const result = await bookingDataCollection.insertOne(bookingData);
-    res.send('successfully added')
-
-  })
-
-  app.get('/booking', async (req, res) => {
-    const result = await bookingDataCollection.find().toArray();
-    res.send(result)
-  })
+    // booking api 
+    app.post('/booking', async (req, res) => {
+      const { formDatas } = req.body
+      const result = await bookingDataCollection.insertOne(formDatas);
+      res.send('successfully added')
 
 
-  // booking update 
+    })
 
-  app.post('/rooms/update', async (req, res) => {
-    const {id} = req.body
-    const query = { _id: new ObjectId(id) };
-    const updateDoc = {
+    app.get('/booking', verifyToken, async (req, res) => {
+      const userEmail = req.query?.email
+      const tokenUser = req.userInfo?.email
+
+      if (userEmail === tokenUser) {
+        // userEmail
+        const query = { userEmail: tokenUser };
+        const result = await bookingDataCollection.find(query).toArray();
+        res.send(result)
+      }
+    })
+
+
+    // booking update 
+
+    app.post('/rooms/update', async (req, res) => {
+      const { id } = req.body
+      const query = { _id: new ObjectId(id) };
+      const updateDoc = {
         $set: {
-            availability: true
+          availability: false
         }
-    };
-    const result = await roomsDataCollection.updateOne(query, updateDoc);
-    res.send('successfully added')
-  })
+      };
+      const result = await roomsDataCollection.updateOne(query, updateDoc);
+      res.send('successfully added')
+    })
 
 
 
