@@ -57,6 +57,7 @@ async function run() {
 
     const roomsDataCollection = client.db('Assignment11DB').collection('roomsData');
     const reviewDataCollection = client.db('Assignment11DB').collection('reviewData');
+    const bookingDataCollection = client.db('Assignment11DB').collection('bookingData');
 
 
     // Auth related API 
@@ -164,6 +165,34 @@ async function run() {
   })
 
 
+
+  // booking api 
+  app.post('/booking', async (req, res) => {
+    const {bookingData} = req.body
+    const result = await bookingDataCollection.insertOne(bookingData);
+    res.send('successfully added')
+
+  })
+
+  app.get('/booking', async (req, res) => {
+    const result = await bookingDataCollection.find().toArray();
+    res.send(result)
+  })
+
+
+  // booking update 
+
+  app.post('/rooms/update', async (req, res) => {
+    const {id} = req.body
+    const query = { _id: new ObjectId(id) };
+    const updateDoc = {
+        $set: {
+            availability: true
+        }
+    };
+    const result = await roomsDataCollection.updateOne(query, updateDoc);
+    res.send('successfully added')
+  })
 
 
 
