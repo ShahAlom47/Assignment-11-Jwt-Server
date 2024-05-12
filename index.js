@@ -187,6 +187,20 @@ async function run() {
       }
     })
 
+    // delete booking 
+    app.delete('/delete', verifyToken, async (req, res) => {
+      const id = req.query.id
+      const userEmail = req.query?.email
+      const tokenUser = req.userInfo?.email
+      console.log(id,userEmail,);
+
+      if (userEmail === tokenUser) {
+        const query = { _id: new ObjectId(id) };
+        const result = await bookingDataCollection.deleteOne(query);
+        res.send(result)
+      }
+    })
+
 
     // booking update 
 
@@ -202,6 +216,7 @@ async function run() {
       res.send('successfully added')
     })
 
+   
 
 
 
