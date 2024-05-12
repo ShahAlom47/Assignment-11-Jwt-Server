@@ -34,7 +34,7 @@ const client = new MongoClient(uri, {
 
 const verifyToken = (req, res, next) => {
   const token = req.cookies.token;
-  // console.log('tok tok ',req.cookies.token);
+ 
 
   if (!token) {
     return res.status(401).send({ message: 'Unauthorized Access' })
@@ -71,7 +71,7 @@ async function run() {
         secure: process.env.NODE_ENV === "production" ? true : false,
         sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
       })
-      console.log(userEmail);
+      
       res.send({ success: true })
 
     })
@@ -149,10 +149,37 @@ async function run() {
 
     })
     //  all reviews Api 
+    // app.get('/reviews', async (req, res) => {
+    //   const sortKey=req.query.value
+    //   console.log(sortKey);
+    //   const options = {};
+    //   if (sortKey === 'recently') {
+       
+    //     options.sort = { time: -1 };
+    //   }
+    //   const result = await reviewDataCollection.find(options).toArray();
+    //   res.send(result)
+    // })
+
+
     app.get('/reviews', async (req, res) => {
-      const result = await reviewDataCollection.find().toArray();
-      res.send(result)
-    })
+      try {
+        const sortKey = req.query.value;
+        console.log(sortKey);
+    
+        const options = {};
+    
+        if (sortKey === 'recently') {
+          options.sort = { time: -1 }; // Sort by time field in descending order for recently
+        }
+    
+        const result = await reviewDataCollection.find({}, options).toArray();
+        res.send(result);
+      } catch (error) {
+        console.error('Error fetching reviews:', error);
+        res.status(500).send('Internal Server Error');
+      }
+    });
 
     // get single room  review by room id 
 
@@ -160,7 +187,7 @@ async function run() {
       const _id = req.params._id;
       const query = { roomId: _id };
       const result = await reviewDataCollection.find(query).toArray();
-      console.log(result);
+      
       res.send(result);
     })
 
@@ -175,6 +202,8 @@ async function run() {
 
     })
 
+// get user all booking
+
     app.get('/booking', verifyToken, async (req, res) => {
       const userEmail = req.query?.email
       const tokenUser = req.userInfo?.email
@@ -187,12 +216,52 @@ async function run() {
       }
     })
 
+    // user   booked single room  
+    app.get('/booking/single', verifyToken, async (req, res) => {
+      const userEmail = req.query?.userEmail
+      const roomId=req.query.roomId
+      const tokenUser = req.userInfo?.email
+      console.log(userEmail,roomId);
+
+      if (userEmail === tokenUser) {
+
+      //   // userEmail
+      const query = { userEmail: tokenUser, roomId: roomId };
+      const result = await bookingDataCollection.find(query).toArray();
+      res.send(result);
+      }
+    })
+
+
+    // update booking 
+
+    app.put(`/update-date`,verifyToken,async (req,res)=>{
+      const userEmail = req.query?.userEmail
+      const tokenUser = req.userInfo?.email
+      const {formData} = req.body
+
+      if (userEmail === tokenUser) {
+
+        const query = { _id: new ObjectId(formData.bookId) };
+        const updateDoc = {
+          $set: {
+            arrDate: formData.arrDate,
+            depDate: formData.depDate,
+          }
+        };
+        const result = await bookingDataCollection.updateOne(query, updateDoc);
+        res.send(result)
+      }
+
+
+    })
+
     // delete booking 
     app.delete('/delete', verifyToken, async (req, res) => {
       const id = req.query.id
       const userEmail = req.query?.email
       const tokenUser = req.userInfo?.email
-      console.log(id,userEmail,);
+    
 
       if (userEmail === tokenUser) {
         const query = { _id: new ObjectId(id) };
@@ -217,6 +286,18 @@ async function run() {
     })
 
    
+    app.post('/rooms/cancel', async (req, res) => {
+      const { roomId } = req.body
+      const query = { _id: new ObjectId(roomId) };
+     
+      const updateDoc = {
+        $set: {
+          availability: true
+        }
+      };
+      const result = await roomsDataCollection.updateOne(query, updateDoc);
+      res.send('successfully added')
+    })
 
 
 
