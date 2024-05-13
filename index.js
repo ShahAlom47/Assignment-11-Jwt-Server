@@ -148,35 +148,24 @@ async function run() {
       res.send('successfully added')
 
     })
-    //  all reviews Api 
-    // app.get('/reviews', async (req, res) => {
-    //   const sortKey=req.query.value
-    //   console.log(sortKey);
-    //   const options = {};
-    //   if (sortKey === 'recently') {
-       
-    //     options.sort = { time: -1 };
-    //   }
-    //   const result = await reviewDataCollection.find(options).toArray();
-    //   res.send(result)
-    // })
+    
 
 
     app.get('/reviews', async (req, res) => {
       try {
         const sortKey = req.query.value;
-        console.log(sortKey);
+       
     
         const options = {};
     
         if (sortKey === 'recently') {
-          options.sort = { time: -1 }; // Sort by time field in descending order for recently
+          options.sort = { time: -1 }; 
         }
     
         const result = await reviewDataCollection.find({}, options).toArray();
         res.send(result);
       } catch (error) {
-        console.error('Error fetching reviews:', error);
+      
         res.status(500).send('Internal Server Error');
       }
     });
@@ -221,7 +210,7 @@ async function run() {
       const userEmail = req.query?.userEmail
       const roomId=req.query.roomId
       const tokenUser = req.userInfo?.email
-      console.log(userEmail,roomId);
+     
 
       if (userEmail === tokenUser) {
 
